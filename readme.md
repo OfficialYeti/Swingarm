@@ -16,3 +16,19 @@ SDIO_ -> { FatFs, SDDriver }
 
 Component::
 ADXL001_ -> component { , Init, Calculate }
+
+
+
+##UART TEST
+	char msg[16];
+	int16_t counter = -16000;
+	while (1)
+	{
+		sprintf(msg, "%d\r\n", counter);
+		while (HAL_UART_GetState(&UART_Handle) != HAL_UART_STATE_READY) {}
+		if (HAL_UART_Transmit_DMA(&UART_Handle, (uint8_t*) msg, strlen(msg)) != HAL_OK)
+		{
+			Error_Handler();
+		}
+		counter++;
+	}

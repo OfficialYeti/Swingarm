@@ -1,38 +1,57 @@
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+extern UART_HandleTypeDef UART_Handle;
 
-/* Private function prototypes -----------------------------------------------*/
+static SDADC_HandleTypeDef *SDADC_Config(void);
+static void ADXL001_Config(void);
 static void SystemClock_Config(void);
-static void Error_Handler(void);
 
-/* Private functions ---------------------------------------------------------*/
-
-/**
- * @brief  Main program
- */
-int main(void) {
-	/* STM32F3xx HAL library initialization:
-	 - Configure the Flash prefetch
-	 - Systick timer is configured by default as source of time base, but user
-	 can eventually implement his proper time base source (a general purpose
-	 timer for example or other time source), keeping in mind that Time base
-	 duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and
-	 handled in milliseconds basis.
-	 - Set NVIC Group Priority to 4
-	 - Low Level Initialization
-	 */
+int main(void)
+{
 	HAL_Init();
-
 	/* Configure the system clock to 72 MHz */
 	SystemClock_Config();
 
-	while (1) {
+	/* Initialize diagnostic RED_LED */
+	__HAL_RCC_GPIOE_CLK_ENABLE()
+	;
+	GPIO_InitTypeDef gpio;
+	gpio.Mode = GPIO_MODE_OUTPUT_PP;
+	gpio.Pin = GPIO_PIN_10;
+	gpio.Speed = GPIO_SPEED_FREQ_LOW;
+	gpio.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOE, &gpio);
+	BSP_LED_Init(LED1);
+	BSP_LED_Init(LED2);
+	BSP_LED_Init(LED3);
+	BSP_LED_Init(LED4);
+
+	UART_config();
+	if (HAL_UART_Init(&UART_Handle) != HAL_OK)
+	{
+		Error_Handler();
 	}
+
+	ADXL001_Config();
+	SDADC_HandleTypeDef *sdadcHandle = SDADC_Config();
+	HAL_SDADC_InjectedStart_IT(sdadcHandle);
+
+	while(1) {}
+}
+
+static SDADC_HandleTypeDef *SDADC_Config(void)
+{
+	SDADC_HandleTypeDef *handle = SDADC3_InitInstance();
+	SDADC_InitDifferentialConfiguration(handle);
+	SDADC_InitChannelsDifferentialy(handle, SDADC3_CH4.channel_id | SDADC3_CH6.channel_id);
+	return handle;
+}
+
+static void ADXL001_Config(void)
+{
+	ADXL001_AddDevice(&ADXL001_Swingarm_V, SDADC3_CH6.location);
+	ADXL001_AddDevice(&ADXL001_Swingarm_H, SDADC3_CH4.location);
+	ADXL001_InitComponents();
 }
 
 /**
@@ -51,7 +70,8 @@ int main(void) {
  * @param  None
  * @retval None
  */
-static void SystemClock_Config(void) {
+static void SystemClock_Config(void)
+{
 	RCC_ClkInitTypeDef RCC_ClkInitStruct;
 	RCC_OscInitTypeDef RCC_OscInitStruct;
 
@@ -62,30 +82,59 @@ static void SystemClock_Config(void) {
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
 	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
 		Error_Handler();
 	}
 
 	/* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
 	 clocks dividers */
-	RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK
-			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+	RCC_ClkInitStruct.ClockType =
+			(RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+	{
 		Error_Handler();
 	}
 }
+
 /**
- * @brief  This function is executed in case of error occurrence.
- * @param  None
+ * @brief  Tx Transfer completed callback
+ * @param  huart: UART handle.
+ * @note   This example shows a simple way to report end of DMA Tx transfer, and
+ *         you can add your own implementation.
  * @retval None
  */
-static void Error_Handler(void) {
-	while (1) {
-	}
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	BSP_LED_Toggle(LED_GREEN);
+}
+
+/**
+ * @brief  Rx Transfer completed callback
+ * @param  huart: UART handle
+ * @note   This example shows a simple way to report end of DMA Rx transfer, and
+ *         you can add your own implementation.
+ * @retval None
+ */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	BSP_LED_On(LED_ORANGE);
+}
+
+/**
+ * @brief  UART error callbacks
+ * @param  huart: UART handle
+ * @note   This example shows a simple way to report transfer error, and you can
+ *         add your own implementation.
+ * @retval None
+ */
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+	BSP_LED_On(LED_RED);
 }
 
 #ifdef  USE_FULL_ASSERT

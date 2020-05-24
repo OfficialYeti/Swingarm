@@ -38,9 +38,8 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 #include "stm32f3xx_it.h"
-
+#include "Infrastructure/UART_/uart.h"
 /** @addtogroup STM32F3xx_HAL_Examples
   * @{
   */
@@ -55,6 +54,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
+extern SDADC_HandleTypeDef SDADC3_Handle;
+extern UART_HandleTypeDef UART_Handle;
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
@@ -166,11 +167,46 @@ void SysTick_Handler(void)
 /*  file (startup_stm32f3xx.s).                                               */
 /******************************************************************************/
 
-void SDADC_IRQHandler()
+void SDADC3_IRQHandler()
 {
-
+	HAL_SDADC_IRQHandler(&SDADC3_Handle);
 }
 
+/**
+  * @brief  This function handles DMA RX interrupt request.
+  * @param  None
+  * @retval None
+  * @Note   This function is redefined in "main.h" and related to DMA stream
+  *         used for USART data transmission
+  */
+void USARTx_DMA_RX_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(UART_Handle.hdmarx);
+}
+
+/**
+  * @brief  This function handles DMA TX interrupt request.
+  * @param  None
+  * @retval None
+  * @Note   This function is redefined in "main.h" and related to DMA stream
+  *         used for USART data reception
+  */
+void USARTx_DMA_TX_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(UART_Handle.hdmatx);
+}
+
+/**
+  * @brief  This function handles USARTx interrupt request.
+  * @param  None
+  * @retval None
+  * @Note   This function is redefined in "main.h" and related to DMA
+  *         used for USART data transmission
+  */
+void USARTx_IRQHandler(void)
+{
+  HAL_UART_IRQHandler(&UART_Handle);
+}
 
 /**
   * @}
