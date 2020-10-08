@@ -1,15 +1,12 @@
-/*
- * uart.h
- *
- *  Created on: 22.03.2020
- *      Author: Rafa³
- */
-
 #ifndef INFRASTRUCTURE_UART__UART_H_
 #define INFRASTRUCTURE_UART__UART_H_
 
 #include "stm32f3xx_hal.h"
+#include "stm32373c_eval.h"
 #include "stm32f3xx_hal_conf.h"
+
+#include "../../ADXL001_/adxl001.h"
+#include "../../RING_BUFFER_/ring_buffer.h"
 
 /* Definition for USARTx clock resources */
 #define USARTx                           USART2
@@ -44,6 +41,17 @@
 #define USARTx_IRQn                      USART2_IRQn
 #define USARTx_IRQHandler                USART2_IRQHandler
 
-void UART_config(void);
+
+/* Size of Transmission buffer */
+#define TXSTARTMESSAGESIZE               (COUNTOF(aTxStartMessage) - 1)
+
+/* Exported macro ------------------------------------------------------------*/
+#define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
+
+/* Public functions */
+void uart_init(void);
+void uart_transmit_start_msg(void);
+HAL_StatusTypeDef uart_put_dma(void *data);
+
 
 #endif /* INFRASTRUCTURE_UART__UART_H_ */

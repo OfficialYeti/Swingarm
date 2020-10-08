@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/Drivers/BSP/STM32373C_EVAL/**",
+                "${workspaceFolder}/Drivers/CMSIS/Device/**",
+                "${workspaceFolder}/Drivers/CMSIS/Include/**",
+                "${workspaceFolder}/Drivers/STM32F3xx_HAL_Driver/Inc/**",
+                "${workspaceFolder}/Drivers/STM32F3xx_HAL_Driver/Src/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "STM32F373xC"
+            ],
+            "windowsSdkVersion": "10.0.18362.0",
+            "compilerPath": "C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/gcc.exe",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64",
+            "cStandard": "c89"
+        }
+    ],
+    "version": 4
+}

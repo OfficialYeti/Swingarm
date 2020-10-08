@@ -54,7 +54,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-extern SDADC_HandleTypeDef SDADC3_Handle;
+extern SDADC_HandleTypeDef sdadc3_handle;
 extern UART_HandleTypeDef UART_Handle;
 /* Private functions ---------------------------------------------------------*/
 
@@ -169,7 +169,7 @@ void SysTick_Handler(void)
 
 void SDADC3_IRQHandler()
 {
-	HAL_SDADC_IRQHandler(&SDADC3_Handle);
+	HAL_SDADC_IRQHandler(&sdadc3_handle);
 }
 
 /**

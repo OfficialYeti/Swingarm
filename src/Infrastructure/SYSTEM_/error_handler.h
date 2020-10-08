@@ -1,10 +1,3 @@
-/*
- * error_handler.h
- *
- *  Created on: 24.05.2020
- *      Author: Rafa³
- */
-
 #ifndef INFRASTRUCTURE_SYSTEM__ERROR_HANDLER_H_
 #define INFRASTRUCTURE_SYSTEM__ERROR_HANDLER_H_
 

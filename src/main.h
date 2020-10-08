@@ -10,14 +10,9 @@
 
 #include "application_interfaces.h"
 
-#include "Components/ADXL001_/adxl001.h"
-#include "Components/ADXL001_/adxl001_devices.h"
+#include "ADXL001_/adxl001.h"
 
-#include "Infrastructure/SDADC_/sdadc.h"
-#include "Infrastructure/SDADC_/sdadc_slots.h"
-
-#include "Infrastructure/UART_/uart.h"
-
+#include "Infrastructure/GPIO_/pin_port.h"
 #include "Infrastructure/SYSTEM_/error_handler.h"
 
 #endif /* __APP_MAIN_H */

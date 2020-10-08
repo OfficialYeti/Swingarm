@@ -1,26 +1,38 @@
 #include "pin_port.h"
 
-static void enable_gpiox_clock(GPIO_TypeDef  *gpiox);
+static void enable_gpiox_clock(GPIO_TypeDef *gpiox);
 
-APP_RESULT GPIO_InitAnalog(PinPort *pin_port)
+APP_RESULT gpio_init_analog(uint32_t pin, GPIO_TypeDef *port)
 {
-	enable_gpiox_clock(pin_port->port);
+	enable_gpiox_clock(port);
 
 	GPIO_InitTypeDef gpio;
-
-	gpio.Mode  = GPIO_MODE_ANALOG;
-	gpio.Pin   = pin_port->pin;
+	gpio.Mode = GPIO_MODE_ANALOG;
+	gpio.Pin = pin;
 	gpio.Speed = GPIO_SPEED_FREQ_LOW;
-	gpio.Pull  = GPIO_NOPULL;
-	HAL_GPIO_Init(pin_port->port, &gpio);
+	gpio.Pull = GPIO_NOPULL;
 
-	if (pin_port->coupled != NULL)
-		return GPIO_InitAnalog(pin_port->coupled);
+	HAL_GPIO_Init(port, &gpio);
 
 	return APP_OK;
 }
 
-static void enable_gpiox_clock(GPIO_TypeDef  *gpiox)
+APP_RESULT gpio_init_output_pp(uint32_t pin, GPIO_TypeDef *port)
+{
+	enable_gpiox_clock(port);
+
+	GPIO_InitTypeDef gpio;
+	gpio.Mode = GPIO_MODE_OUTPUT_PP;
+	gpio.Pin = pin;
+	gpio.Speed = GPIO_SPEED_FREQ_LOW;
+	gpio.Pull = GPIO_NOPULL;
+
+	HAL_GPIO_Init(port, &gpio);
+
+	return APP_OK;
+}
+
+static void enable_gpiox_clock(GPIO_TypeDef *gpiox)
 {
 	if (gpiox == GPIOA)
 		__HAL_RCC_GPIOA_CLK_ENABLE();
@@ -35,31 +47,3 @@ static void enable_gpiox_clock(GPIO_TypeDef  *gpiox)
 	if (gpiox == GPIOF)
 		__HAL_RCC_GPIOF_CLK_ENABLE();
 }
-
-// PINPORTS
-
-PinPort PD10 = {
-		.pin = GPIO_PIN_10,
-		.port = GPIOD,
-
-		.coupled = &PD11
-};
-PinPort PD11 = {
-		.pin = GPIO_PIN_11,
-		.port = GPIOD,
-
-		.coupled = NULL
-};
-
-PinPort PD9 = {
-		.pin = GPIO_PIN_9,
-		.port = GPIOD,
-
-		.coupled = NULL
-};
-PinPort PD8 = {
-		.pin = GPIO_PIN_8,
-		.port = GPIOD,
-
-		.coupled = &PD9
-};

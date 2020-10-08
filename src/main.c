@@ -1,57 +1,20 @@
 #include "main.h"
 
-extern UART_HandleTypeDef UART_Handle;
-
-static SDADC_HandleTypeDef *SDADC_Config(void);
-static void ADXL001_Config(void);
-static void SystemClock_Config(void);
+static void _system_clock_config(void);
+static void _diagnostic_config(void);
 
 int main(void)
 {
 	HAL_Init();
-	/* Configure the system clock to 72 MHz */
-	SystemClock_Config();
+	_system_clock_config(); // Configure the system clock to 72 MHz
+	_diagnostic_config();
+	adxl_init();
+	adxl_start(ADXL_MEASURE_AVERAGE);
 
-	/* Initialize diagnostic RED_LED */
-	__HAL_RCC_GPIOE_CLK_ENABLE()
-	;
-	GPIO_InitTypeDef gpio;
-	gpio.Mode = GPIO_MODE_OUTPUT_PP;
-	gpio.Pin = GPIO_PIN_10;
-	gpio.Speed = GPIO_SPEED_FREQ_LOW;
-	gpio.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOE, &gpio);
-	BSP_LED_Init(LED1);
-	BSP_LED_Init(LED2);
-	BSP_LED_Init(LED3);
-	BSP_LED_Init(LED4);
-
-	UART_config();
-	if (HAL_UART_Init(&UART_Handle) != HAL_OK)
+	while (1)
 	{
-		Error_Handler();
+		adxl_run();
 	}
-
-	ADXL001_Config();
-	SDADC_HandleTypeDef *sdadcHandle = SDADC_Config();
-	HAL_SDADC_InjectedStart_IT(sdadcHandle);
-
-	while(1) {}
-}
-
-static SDADC_HandleTypeDef *SDADC_Config(void)
-{
-	SDADC_HandleTypeDef *handle = SDADC3_InitInstance();
-	SDADC_InitDifferentialConfiguration(handle);
-	SDADC_InitChannelsDifferentialy(handle, SDADC3_CH4.channel_id | SDADC3_CH6.channel_id);
-	return handle;
-}
-
-static void ADXL001_Config(void)
-{
-	ADXL001_AddDevice(&ADXL001_Swingarm_V, SDADC3_CH6.location);
-	ADXL001_AddDevice(&ADXL001_Swingarm_H, SDADC3_CH4.location);
-	ADXL001_InitComponents();
 }
 
 /**
@@ -70,7 +33,7 @@ static void ADXL001_Config(void)
  * @param  None
  * @retval None
  */
-static void SystemClock_Config(void)
+static void _system_clock_config(void)
 {
 	RCC_ClkInitTypeDef RCC_ClkInitStruct;
 	RCC_OscInitTypeDef RCC_OscInitStruct;
@@ -90,7 +53,7 @@ static void SystemClock_Config(void)
 	/* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
 	 clocks dividers */
 	RCC_ClkInitStruct.ClockType =
-			(RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+		(RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -101,43 +64,17 @@ static void SystemClock_Config(void)
 	}
 }
 
-/**
- * @brief  Tx Transfer completed callback
- * @param  huart: UART handle.
- * @note   This example shows a simple way to report end of DMA Tx transfer, and
- *         you can add your own implementation.
- * @retval None
- */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+static void _diagnostic_config()
 {
-	BSP_LED_Toggle(LED_GREEN);
+	gpio_init_output_pp(GPIO_PIN_10, GPIOE);
+
+	BSP_LED_Init(LED1);
+	BSP_LED_Init(LED2);
+	BSP_LED_Init(LED3);
+	BSP_LED_Init(LED4);
 }
 
-/**
- * @brief  Rx Transfer completed callback
- * @param  huart: UART handle
- * @note   This example shows a simple way to report end of DMA Rx transfer, and
- *         you can add your own implementation.
- * @retval None
- */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	BSP_LED_On(LED_ORANGE);
-}
-
-/**
- * @brief  UART error callbacks
- * @param  huart: UART handle
- * @note   This example shows a simple way to report transfer error, and you can
- *         add your own implementation.
- * @retval None
- */
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
-{
-	BSP_LED_On(LED_RED);
-}
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 
 /**
  * @brief  Reports the name of the source file and the source line number
