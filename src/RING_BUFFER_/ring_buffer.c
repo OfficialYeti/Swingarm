@@ -87,10 +87,7 @@ int8_t ring_buffer_skip(ring_buffer_descriptor_t bd)
 	return 0;
 }
 
-/*
- * REVIEW - Think about return type and error handling.
- */
-void* ring_buffer_get_tail_ptr(ring_buffer_descriptor_t bd)
+void *ring_buffer_get_tail_ptr(ring_buffer_descriptor_t bd)
 {
 	if (bd >= MAX_BUFFER_COUNT)
 		return NULL;
@@ -98,7 +95,7 @@ void* ring_buffer_get_tail_ptr(ring_buffer_descriptor_t bd)
 		return NULL;
 
 	const size_t offset = (_buffer[bd].tail & (_buffer[bd].length - 1)) * _buffer[bd].item_size;
-	void* tail = &_buffer[bd].data[offset];
+	void *tail = &_buffer[bd].data[offset];
 
 	return tail;
 }

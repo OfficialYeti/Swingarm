@@ -5,7 +5,6 @@
 #include "../application_interfaces.h"
 
 #include "../Infrastructure/GPIO_/pin_port.h"
-#include "../Infrastructure/UART_/uart.h"
 #include "../Infrastructure/SDADC_/sdadc.h"
 #include "../Infrastructure/SYSTEM_/error_handler.h"
 

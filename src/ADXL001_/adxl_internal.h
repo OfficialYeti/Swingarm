@@ -19,7 +19,7 @@
 
 float adxl_get_gforce(int16_t adc_value);
 
-/* ## ADXL MODELS ## */
+/* ## ADXL MODELS PROTOTYPES ## */
 
 typedef struct adxl
 {

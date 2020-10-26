@@ -6,11 +6,6 @@ static ring_buffer_descriptor_t _uart_bd;
 static adxl_result_t _uart_rb_mem[128]; /* Consider allocation this buffer in adxl module and passing only buffer descriptor. */
 __IO static uint8_t _uart_rb_lock = 0;  /* 0 - free, 1 - locked. Used to ommit HAL flag which requires interrupt disable when reading. */
 
-
-uint8_t aTxStartMessage[] = "\n\r ****UART-Hyperterminal communication based on DMA****\n\r Enter 10 characters using keyboard :\n\r";
-
-
-
 /**
  * @brief  Initialize buffer and put the USART peripheral in the Asynchronous mode (UART Mode).
  * @note   UART configured as follows:
@@ -18,7 +13,7 @@ uint8_t aTxStartMessage[] = "\n\r ****UART-Hyperterminal communication based on 
  *		           BE CAREFUL : Program 8 data bits + 1 parity bit in PC HyperTerminal
  *           - Stop Bit    = One Stop bit
  *	         - Parity      = ODD parity
- *	         - BaudRate    = 115200 baud -- testing more
+ *	         - BaudRate    = 115200 baud
  *	         - Hardware flow control disabled (RTS and CTS signals)
  */
 void uart_init(void)
@@ -41,7 +36,7 @@ void uart_init(void)
   UART_Handle.Init.Mode = UART_MODE_TX_RX;
 
   /**
-   * NOTE: Ue either 16 or 8 oversampling
+   * NOTE: Use either 16 or 8 oversampling
    *       Max frequency for:
    *          - 8bit oversampling -> 9Mhz (900kB/s)
    *          - 16bit oversampling -> 4,5Mhz (450kB/s)
@@ -134,27 +129,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
   HAL_NVIC_EnableIRQ(USARTx_IRQn);
 }
 
-void uart_transmit_start_msg(void)
-{
-	while (1)
-	{
-		if(HAL_UART_Transmit_DMA(&UART_Handle, (uint8_t*)aTxStartMessage, TXSTARTMESSAGESIZE)!= HAL_OK)
-		{
-			/* Transfer error in transmission process */
-			Error_Handler();
-		}
-
-		while (HAL_UART_GetState(&UART_Handle) != HAL_UART_STATE_READY)
-		{
-		}
-	}
-}
-
 /**
  * @brief  Put data into uart buffer and if uart is not busy start transmitting.
- * @note   "Also, you may want to disable the UART interrupt while you check if it is busy,
- *         and load the buffer, so that you avoid the reace condition
- *         where the interrupt gets triggered on the last char going out while you are updating the buffer."
  * @note   ring_buffer_get_tail_ptr(_uart_bd, tail) is used, becouse when transmitting by DMA
  *         our function is not waiting for transmission complete. It's like fire and forget.
  *         So temp variable will be destroyed at the end of function scope and memory could be overwrite.
@@ -173,10 +149,6 @@ HAL_StatusTypeDef uart_put_dma(void *data)
   return HAL_OK;
 }
 
-/**
- * @brief
- *
- */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
   ring_buffer_skip(_uart_bd);
@@ -189,20 +161,13 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
   BSP_LED_Toggle(LED_GREEN);
 }
 
-/**
- * @brief
- *
- */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   BSP_LED_On(LED_ORANGE);
 }
 
-/**
- * @brief
- *
- */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
+  /* Show error without calling main error handler with infinite loop */
   BSP_LED_On(LED_RED);
 }

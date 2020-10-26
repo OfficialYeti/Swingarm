@@ -1,10 +1,12 @@
 #include "adxl001.h"
 #include "adxl_internal.h"
+#include "../Infrastructure/USB_/usb_device.h"
 
 #ifdef ADXL001_ENABLED
 
 static ring_buffer_descriptor_t _adxl_bd;
 static adxl_sample_t _buff_mem[256];
+static char result[10];
 
 APP_RESULT adxl_init()
 {
@@ -21,20 +23,20 @@ APP_RESULT adxl_init()
 	gpio_init_analog(ADXL_DEVICE_STEERING_SIGNAL_P, ADXL_DEVICE_STEERING_PORT);
 	gpio_init_analog(ADXL_DEVICE_STEERING_SIGNAL_N, ADXL_DEVICE_STEERING_PORT);
 
-	/* init adc channels (binded to inputsF) */
+	/* init adc channels (binded to inputs) */
 	sdadc_init(ADXL_DEVICE_SWINGARM_SDADC_CHANNEL | ADXL_DEVICE_STEERING_SDADC_CHANNEL);
 
-	/* init uart */
-	uart_init();
+	/* init pc comunnication */
+	//	uart_init();
+	USB_DEVICE_Init();
 
 	return APP_OK;
 }
 
 APP_RESULT adxl_start(ADXL_MEASURE_MODE mode)
 {
-	uart_transmit_start_msg();
-
-	/* TODO: setup measure mode */
+	/* TODO: setup measure mode
+	 * 		 handle comunication from pc to board */
 	sdadc_start();
 
 	return APP_OK;
@@ -48,12 +50,14 @@ APP_RESULT adxl_run()
 	/* get sample from adc buffer */
 	adxl_sample_t sample = {.value = -1, .channel = 0};
 	if (ring_buffer_pop(_adxl_bd, &sample) == -1)
-		return 0;
+		return APP_IDLE;
 
-	/* put value converted to gforce into uart dma buffer */
+	/* send value converted to gforce */
+	/* consider sending binary data */
 	float gforce = adxl_get_gforce(sample.value);
-	adxl_result_t result = {.gforce = gforce, .channel = sample.channel};
-	uart_put_dma(&result);
+	size_t length = sprintf(result, "%d:%3.3f", sample.channel, gforce);
+	if (CDC_Transmit_FS(result, length) == USBD_BUSY)
+		return APP_BUSY;
 
 	return APP_OK;
 }
@@ -66,18 +70,13 @@ APP_RESULT adxl_run()
  */
 void HAL_SDADC_InjectedConvCpltCallback(SDADC_HandleTypeDef *hsdadc)
 {
-	HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_10);
+	HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_10); /* measure frequency */
 
 	uint32_t device_channel = 0;
-	/* REVIEW - make sure that casting from uint32_t to int16_t works! */
 	int16_t value = HAL_SDADC_InjectedGetValue(hsdadc, &device_channel);
 
-	/** NOTE - Here i use a running average
-	 *	       with a down counter and a logical bitwise shifting
-	 *
-	 *		   With uart baudrate 921600 i have ~90kB/s transfer
-	 *		   so with 16,6kHz sampling rate and 8byte sample size
-	 *				-> 133kB/s
+	/** NOTE - Running Average with down counter for defined constant
+	 * 		   Move to separate function
 	**/
 	static uint8_t count = AVERAGING_OVER;
 	static int32_t first_channel_sum = 0;

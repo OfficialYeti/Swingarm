@@ -3,11 +3,15 @@
 
 #include "stm32f3xx_hal.h"
 
-typedef enum {
+typedef enum
+{
 	APP_OK = 0,
+	APP_BUSY,
+	APP_IDLE,
 	APP_INIT_ERROR,
 	APP_OPERATION_ERROR,
-	APP_ASSERT_ERROR
+	APP_OPERATION_WARRNING,
+	APP_ASSERT_ERROR,
 } APP_RESULT;
 
 #endif /* APPLICATION_INTERFACES_H_ */

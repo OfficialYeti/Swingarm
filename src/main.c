@@ -1,5 +1,4 @@
 #include "main.h"
-
 static void _system_clock_config(void);
 static void _diagnostic_config(void);
 
@@ -8,12 +7,26 @@ int main(void)
 	HAL_Init();
 	_system_clock_config(); // Configure the system clock to 72 MHz
 	_diagnostic_config();
+
 	adxl_init();
 	adxl_start(ADXL_MEASURE_AVERAGE);
 
 	while (1)
 	{
-		adxl_run();
+		switch (adxl_run())
+		{
+		case APP_IDLE:
+			BSP_LED_Toggle(LED1);
+			break;
+		case APP_OPERATION_WARRNING:
+			BSP_LED_Toggle(LED2);
+			break;
+		case APP_BUSY:
+			BSP_LED_Toggle(LED4);
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -30,8 +43,6 @@ int main(void)
  *            HSE PREDIV                     = 1
  *            PLLMUL                         = RCC_PLL_MUL9 (9)
  *            Flash Latency(WS)              = 2
- * @param  None
- * @retval None
  */
 static void _system_clock_config(void)
 {
